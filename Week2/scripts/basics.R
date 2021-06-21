@@ -1,0 +1,82 @@
+# load packages ------------
+
+# Remember to install the packages first!
+# Select the lines and hit run OR press CTRL+ENTER
+
+library(tidyverse)
+library(here)
+library(skimr)
+# New package!
+library(janitor)
+
+# read in data -------------
+
+# = can be used instead of "<-"
+# remember many function names are close or overlap!!!
+# readr::read_csv
+beaches <- read_csv(here("data", "sydneybeaches.csv"))
+
+# same thing with code below
+
+beaches <- readr::read_csv(here::here("data", "sydneybeaches.csv"))
+
+# explore data --------------
+
+## view the data like a worksheet -----
+View(beaches)
+
+## dimensions -----
+dim(beaches)
+
+## structure ------
+str(beaches)
+
+## cleaner structure in table -----
+glimpse(beaches)
+
+## see first few rows -----
+head(beaches)
+
+## see last few rows -----
+tail(beaches)
+
+## summary of the data -----
+summary(beaches)
+
+# skimr -------
+# install first! install.packages("skimr")
+
+skim(beaches)
+
+# tidying beaches --------------
+
+## testing select_all ---------
+select_all(beaches, toupper)
+
+select_all(beaches, tolower)
+
+## easier with janitor -----
+# note the `janitor::` is unnessary since
+## library(janitor is called already in the script)
+janitor::clean_names(beaches)
+# Note we have NOT actually cleaned beaches yet!
+
+cleanbeaches = clean_names(beaches)
+
+# check new data frame 
+str(cleanbeaches)
+
+### are the names changed though? -------
+# `all` tests logicals and `==` tests "are these equal"
+all(names(beaches) == names(cleanbeaches))
+
+## rename enterococci ----
+
+# Note that we have to reassign cleanbeaches again to save the renaming!
+cleanbeaches = rename(cleanbeaches, beachbugs = enterococci_cfu_100ml)
+
+## Pipes %>% FTW ----
+
+### "Ceci n'est pas une pipe" ###
+
+

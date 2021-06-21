@@ -1,2 +1,8 @@
-# STORK_summeR_2021
+# STORK summeR school 2021
 Within this repository are the files for the 2021 STORK R Summer School. 
+
+## Videos
+
+- Week 1: The Basics of RStudio
+https://www.youtube.com/watch?v=Qu2fo073_Pw
+
