@@ -75,8 +75,58 @@ all(names(beaches) == names(cleanbeaches))
 # Note that we have to reassign cleanbeaches again to save the renaming!
 cleanbeaches = rename(cleanbeaches, beachbugs = enterococci_cfu_100ml)
 
-## Pipes %>% FTW ----
+# Pipes %>% FTW ----
 
 ### "Ceci n'est pas une pipe" ###
 
+# remove cleanbeaches
+rm(cleanbeaches)
 
+## create cleanbeaches with a pipe -----
+
+
+cleanbeaches = beaches %>%
+  clean_names() %>% # clean columns
+  rename(beachbugs = enterococci_cfu_100ml)  # rename
+
+# export cleanbeaches ----
+write_csv(cleanbeaches, "cleanbeaches.csv")
+# but note that it saves the file to root of your project
+
+# Arrange those bugs! -------
+## show beaches with worst bugs --
+worstbugs = cleanbeaches %>% arrange(desc(beachbugs))
+
+## reduce to coogee beach
+
+worstcoogee = cleanbeaches %>% 
+  filter(site == "Coogee Beach") %>%
+  arrange(-beachbugs)
+
+# Summarize beaches -------
+
+## Which beach has the worst bacteria levels on average? -------
+
+cleanbeaches %>%
+  group_by(site) %>% # group data
+  # then we summarize!
+  summarize(mean_bugs = mean(beachbugs, 
+                             na.rm = TRUE), # na.rm removes the missing data
+            sd_bugs = sd(beachbugs,
+                         na.rm = TRUE),
+            max_bugs = max(beachbugs,
+                           na.rm = TRUE),
+            .groups = 'drop') # drops organizing category
+
+## compare councils ---------
+
+cleanbeaches %>%
+  group_by(council, site) %>% # group data
+  # then we summarize!
+  summarize(mean_bugs = mean(beachbugs, 
+                             na.rm = TRUE), # na.rm removes the missing data
+            med_bugs = median(beachbugs,
+                         na.rm = TRUE),
+            .groups = 'drop') # drops organizing category
+
+ 
