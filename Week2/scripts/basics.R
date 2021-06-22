@@ -84,7 +84,6 @@ rm(cleanbeaches)
 
 ## create cleanbeaches with a pipe -----
 
-
 cleanbeaches = beaches %>%
   clean_names() %>% # clean columns
   rename(beachbugs = enterococci_cfu_100ml)  # rename
@@ -128,5 +127,57 @@ cleanbeaches %>%
             med_bugs = median(beachbugs,
                          na.rm = TRUE),
             .groups = 'drop') # drops organizing category
+# Compute Variables --------
 
- 
+## seperate date -----------
+testdate = cleanbeaches %>%
+  separate(date, c("day","month","year"),
+           remove = FALSE)
+
+### Take a Look -------------
+
+testdate %>%
+  select(beach_id, date,day,month,year) %>%
+  head()
+
+## unite council and site
+
+cleanbeaches = cleanbeaches %>%
+  unite(council_site,council:site) # unite creates a single "united" variable
+
+## Mutate: Log beachbugs --------
+
+cleanbeaches = cleanbeaches %>%
+  mutate(logbeachbugs = log(beachbugs))
+
+## Mutate: diff beachbugs ----------
+
+cleanbeaches = cleanbeaches %>%
+  mutate(beachbugsdiff = beachbugs - lag(beachbugs))
+
+## Mutate: logical variable
+
+cleanbeaches = cleanbeaches %>%
+  # compute TRUE/FALSE if bugs greater than average
+  # though the median is probably a better metric here.
+  mutate(buggier = beachbugs > mean(beachbugs, na.rm=TRUE))
+
+
+# All in 1 step ----
+rm(cleanbeaches)
+# Pipes!!!!
+
+cleanbeaches = beaches %>%
+  clean_names() %>% # clean columns
+  rename(beachbugs = enterococci_cfu_100ml)  %>%
+  separate(date, c("day","month","year"),
+           remove = FALSE) %>%
+  unite(council_site,council:site) %>%
+  mutate(logbeachbugs = log(beachbugs),
+         beachbugsdiff = beachbugs - lag(beachbugs),
+         buggier = beachbugs > mean(beachbugs, na.rm=TRUE))
+
+
+# Pivot ------
+  
+
