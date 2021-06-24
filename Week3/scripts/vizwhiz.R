@@ -298,8 +298,8 @@ raintemp = read_csv(here("data", "rain_temp_beachbugs.csv"))
                 formula = y ~ x) +
     theme_classic() +
     scale_color_viridis_c(option = "plasma") +
-    labs(x = "Log + 1 of rainfall",
-         y = "Log + 1 of enterococci levels",
+    labs(x = "log(rainfall [mm] + 1)",
+         y = "log(enterococci + 1)",
          color = "Temperature at Airport (°C)") +
     facet_wrap(~temp_bin) +
     theme(legend.position = "top")
@@ -315,18 +315,23 @@ raintemp = read_csv(here("data", "rain_temp_beachbugs.csv"))
                y=log(beachbugs+1),
                color=temp_airport)) +
     #geom_point() +
+    geom_density_2d_filled(contour_var = "count",
+                           alpha = .5) +
     geom_density_2d(contour_var = "count",
                     size = 0.5, colour = "black") +
     geom_smooth(method = "lm",
                 se = FALSE,
                 formula = y ~ x) +
     theme_classic() +
-    scale_color_viridis_c(option = "plasma") +
-    labs(x = "Log + 1 of rainfall",
-         y = "Log + 1 of enterococci levels",
-         color = "Temperature at Airport (°C)") +
-    facet_wrap(~temp_bin) +
-    theme(legend.position = "top")
+    scale_fill_brewer() +
+    labs(x = "log(rainfall [mm] + 1)",
+         y = "log(enterococci + 1)",
+         fill = "Observations",
+         caption = "Note: Zeros removed from rainfall data") +
+    scale_y_continuous(expand=c(0,0)) +
+    scale_x_continuous(expand=c(0,0)) +
+    #facet_wrap(~temp_bin) +
+    theme(legend.position = "bottom")
 )
 
 
