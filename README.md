@@ -5,4 +5,5 @@ Within this repository are the files for the 2021 STORK R Summer School.
 
 - Week 1: The Basics of RStudio
 https://www.youtube.com/watch?v=Qu2fo073_Pw
-
+- Week 2: Into the tidyverse
+https://youtu.be/0t50pnkxbMw
