@@ -25,4 +25,7 @@ beach_long = wide %>%
 beach_wide = long %>%
   pivot_wider(names_from = site,
               values_from = buglevels)
- 
+
+# Check to see if values are equal in each data set
+all(wide == beach_wide)
+

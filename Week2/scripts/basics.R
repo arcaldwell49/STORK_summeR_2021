@@ -48,6 +48,7 @@ summary(beaches)
 
 skim(beaches)
 
+
 # tidying beaches --------------
 
 ## testing select_all ---------
@@ -89,12 +90,13 @@ cleanbeaches = beaches %>%
   rename(beachbugs = enterococci_cfu_100ml)  # rename
 
 # export cleanbeaches ----
-write_csv(cleanbeaches, "cleanbeaches.csv")
+write_csv(cleanbeaches, "data/cleanbeaches.csv")
 # but note that it saves the file to root of your project
 
 # Arrange those bugs! -------
 ## show beaches with worst bugs --
-worstbugs = cleanbeaches %>% arrange(desc(beachbugs))
+worstbugs = cleanbeaches %>% 
+  arrange(desc(beachbugs))
 
 ## reduce to coogee beach
 
@@ -102,11 +104,15 @@ worstcoogee = cleanbeaches %>%
   filter(site == "Coogee Beach") %>%
   arrange(-beachbugs)
 
+worst2 = cleanbeaches %>%
+  filter(site == "Coogee Beach" | site == "Malabar Beach") %>%
+  arrange(-beachbugs)
+
 # Summarize beaches -------
 
 ## Which beach has the worst bacteria levels on average? -------
 
-cleanbeaches %>%
+sum1 = cleanbeaches %>%
   group_by(site) %>% # group data
   # then we summarize!
   summarize(mean_bugs = mean(beachbugs, 
@@ -116,6 +122,9 @@ cleanbeaches %>%
             max_bugs = max(beachbugs,
                            na.rm = TRUE),
             .groups = 'drop') # drops organizing category
+
+# Export summaries
+write_csv(sum1, "sum1.csv")
 
 ## compare councils ---------
 
@@ -127,12 +136,13 @@ cleanbeaches %>%
             med_bugs = median(beachbugs,
                          na.rm = TRUE),
             .groups = 'drop') # drops organizing category
+
 # Compute Variables --------
 
 ## seperate date -----------
 testdate = cleanbeaches %>%
-  separate(date, c("day","month","year"),
-           remove = FALSE)
+  separate(date, c("day","month","year"), 
+           remove = FALSE )
 
 ### Take a Look -------------
 
@@ -145,10 +155,14 @@ testdate %>%
 cleanbeaches = cleanbeaches %>%
   unite(council_site,council:site) # unite creates a single "united" variable
 
+cleanbeaches = cleanbeaches %>%
+  mutate(council_site = paste0(council,"_",site),
+         region_site = paste0(beach_id,"_",site))
+
 ## Mutate: Log beachbugs --------
 
 cleanbeaches = cleanbeaches %>%
-  mutate(logbeachbugs = log(beachbugs))
+  mutate(logbeachbugs = log(beachbugs+1))
 
 ## Mutate: diff beachbugs ----------
 
@@ -172,7 +186,7 @@ cleanbeaches = beaches %>%
   rename(beachbugs = enterococci_cfu_100ml)  %>%
   separate(date, c("day","month","year"),
            remove = FALSE) %>%
-  unite(council_site,council:site) %>%
+  #unite(council_site,council:site) %>%
   mutate(logbeachbugs = log(beachbugs),
          beachbugsdiff = beachbugs - lag(beachbugs),
          buggier = beachbugs > mean(beachbugs, na.rm=TRUE))
