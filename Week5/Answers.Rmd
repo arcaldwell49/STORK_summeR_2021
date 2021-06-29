@@ -1,0 +1,53 @@
+---
+title: 'Week 5: Correlations, t-tests, ANOVAs, oh my!'
+author: "Aaron R. Caldwell"
+date: "6/28/2021"
+output: word_document
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+library(tidyverse)
+```
+
+# Week 5 Answers
+
+This week's instructions were written in R now that everyone is aware of how to use Rmarkdown.
+
+Now we get down to what R was created for: statistics. 
+
+# Useful Packages
+
+```{r}
+# statistics pacakges
+# functions simliar to tidyverse
+# install.packages("easystats", repos = "https://easystats.r-universe.dev")
+library(easystats)
+
+# For ANOVAs
+library(afex)
+
+# For equivalence testing
+# Download the developmental version
+# devtools::install_github("arcaldwell49/TOSTER")
+library(TOSTER)
+```
+
+Now, let's import the data we need for this week!
+
+```{r}
+data("sleep")
+data("ChickWeight")
+data("iris")
+```
+
+
+# Correlations
+
+
+# t-test
+
+
+# ANOVA
