@@ -2,10 +2,12 @@
 title: 'Week 5: Correlations, t-tests, ANOVAs, oh my!'
 author: "Aaron R. Caldwell"
 date: "6/28/2021"
-output: word_document
+output: 
+  github_document:
+    toc: TRUE
 ---
 
-```{r setup, include=TRUE}
+```{r setup, include=TRUE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
                       message = FALSE,
                       warning = FALSE)
@@ -21,7 +23,7 @@ Now we get down to what R was created for: statistics.
 # Useful Packages
 
 ```{r}
-# statistics pacakges
+# statistics packages
 # functions simliar to tidyverse
 # install.packages("easystats", repos = "https://easystats.r-universe.dev")
 library(easystats)
@@ -43,11 +45,100 @@ data("ChickWeight")
 data("iris")
 ```
 
+\newpage
 
 # Correlations
 
+> Let's assume you are a botanist and are interested in the relationship between different measures of flower size. You are going to use the `iris` dataset to determine the correlation between 4 different meaures: sepal length, sepal width, petal length, and petal width.
+
+This process isn't too difficult with the `correlation` package, but we could just as easily use the base version function `cor` or `cor.test`.
+
+```{r}
+# First remove the species column
+iris2 = iris %>%
+  select(-Species)
+
+correlation(iris2,
+            method = "Pearson") %>%
+  knitr::kable(caption = "Correlation: Pearson Coefficient")
+```
+
+\newpage
+
+```{r}
+correlation(iris2,
+            method = "Spearman") %>%
+  knitr::kable(caption = "Correlation: Spearman Coefficient")
+```
+
+\newpage
+
+We can also plot the results to visualize the relationship.
+
+```{r}
+correlation(iris2,
+            method = "Spearman") %>%
+  summary()%>%
+  plot(show_values = TRUE, show_p = TRUE, show_legend = FALSE)
+```
+
+\newpage
+
+Fun note: you can even plot the *partial* correlations.
+
+```{r}
+# You will need ggpraph
+library(ggraph)
+correlation(iris2,
+            partial = TRUE) %>%
+  plot()
+```
+
+\newpage
+
+## Base R approach
+
+As I mentioned before you can use the `cor.test` is there is a particular correlation you want to test. This is useful if you do not want to create a matrix of results.
+
+As an example, let's use `cor.test` to test the relationship between sepal length and petal length.
+
+```{r}
+sepal_length = iris$Sepal.Length
+petal_length = iris$Petal.Length
+test1 = cor.test(sepal_length,petal_length)
+# Now we can print the result
+test1
+
+```
+
+However, we can also use the `report` package to get a summary of the result.
+
+```{r }
+test = report(test1)
+test
+```
+
+`r report(test1)`
+
 
 # t-test
+
+> Let's compare the groups (i.e., drug) in the "sleep" dataset and see if there is a difference in the hours of sleep each night 
+
+## Equivalence Test
+
+```{r}
+# remember library(TOSTER)
+
+TOSTsleep = t_TOST(extra ~ group,
+                   data = sleep,
+                   low_eqbound = -1,
+                   high_eqbound = 1)
+
+TOSTsleep
+
+plot(TOSTsleep)
+```
 
 
 # ANOVA
