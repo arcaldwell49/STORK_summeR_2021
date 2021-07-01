@@ -1,7 +1,6 @@
 Week 5: Correlations, t-tests, ANOVAs, oh my!
 ================
 Aaron R. Caldwell
-6/28/2021
 
 -   [Week 5 Answers](#week-5-answers)
 -   [Useful Packages](#useful-packages)
@@ -153,14 +152,7 @@ test1
 However, we can also use the `report` package to get a summary of the
 result.
 
-``` r
-test = report(test1)
-test
-```
-
-    ## Effect sizes were labelled following Funder's (2019) recommendations.
-    ## 
-    ## The Pearson's product-moment correlation between sepal_length and petal_length is positive, statistically significant, and very large (r = 0.87, 95% CI [0.83, 0.91], t(148) = 21.65, p < .001)
+    report(test1)
 
 Effect sizes were labelled following Funder’s (2019) recommendations.
 
@@ -173,39 +165,117 @@ petal\_length is positive, statistically significant, and very large (r
 > Let’s compare the groups (i.e., drug) in the “sleep” dataset and see
 > if there is a difference in the hours of sleep each night
 
+So, in this scenario you are trying to test if there are difference
+between two treatments. Let’s check the data and see what it looks like.
+
+``` r
+knitr::kable(sleep)
+```
+
+| extra | group | ID  |
+|------:|:------|:----|
+|   0.7 | 1     | 1   |
+|  -1.6 | 1     | 2   |
+|  -0.2 | 1     | 3   |
+|  -1.2 | 1     | 4   |
+|  -0.1 | 1     | 5   |
+|   3.4 | 1     | 6   |
+|   3.7 | 1     | 7   |
+|   0.8 | 1     | 8   |
+|   0.0 | 1     | 9   |
+|   2.0 | 1     | 10  |
+|   1.9 | 2     | 1   |
+|   0.8 | 2     | 2   |
+|   1.1 | 2     | 3   |
+|   0.1 | 2     | 4   |
+|  -0.1 | 2     | 5   |
+|   4.4 | 2     | 6   |
+|   5.5 | 2     | 7   |
+|   1.6 | 2     | 8   |
+|   4.6 | 2     | 9   |
+|   3.4 | 2     | 10  |
+
+Notice how the ID repeats between treatments? That means we have a
+*paired* sample; meaning that each participant was exposed to **both**
+conditions. This means we will use a paired samples t-test to test for
+differences in the mean increase in the hours of sleep (`extra`).
+
+Luckily, R makes this easy with the built in `t.test` function.
+
+``` r
+# formula approach
+ttest1 = t.test(extra ~ group,
+                data = sleep,
+                paired = TRUE)
+
+# 2 vector approach
+
+ttest2 = t.test(x = subset(sleep, group ==1)$extra,
+                y = subset(sleep, group ==2)$extra,
+                paired = TRUE)
+
+ttest1
+```
+
+    ## 
+    ##  Paired t-test
+    ## 
+    ## data:  extra by group
+    ## t = -4.0621, df = 9, p-value = 0.002833
+    ## alternative hypothesis: true difference in means is not equal to 0
+    ## 95 percent confidence interval:
+    ##  -2.4598858 -0.7001142
+    ## sample estimates:
+    ## mean of the differences 
+    ##                   -1.58
+
+Again, we can use the `report` function to get a tidy text output
+
+    report(ttest1)
+
+Effect sizes were labelled following Cohen’s (1988) recommendations.
+
+The Paired t-test testing the difference of extra by group (mean of the
+differences = -1.58) suggests that the effect is negative, statistically
+significant, and large (difference = -1.58, 95% CI \[-2.46, -0.70\],
+t(9) = -4.06, p = 0.003; Cohen’s d = -1.35, 95% CI \[-2.23, -0.44\])
+
 ## Equivalence Test
 
 ``` r
 # remember library(TOSTER)
 
-TOSTsleep = t_TOST(extra ~ group,
-                   data = sleep,
-                   low_eqbound = -1,
-                   high_eqbound = 1)
+TOSTsleep = t_TOST(
+  extra ~ group,
+  data = sleep,
+  low_eqbound = -1,
+  high_eqbound = 1,
+  paired = TRUE
+)
 
 TOSTsleep
 ```
 
     ## 
-    ## Welch Two Sample t-test
+    ## Paired t-test
     ## Hypothesis Tested: Equivalence
     ## Equivalence Bounds (raw):-1.000 & 1.000
     ## Alpha Level:0.05
-    ## The equivalence test was non-significant, t(17.78) = -0.683, p = 7.48e-01
-    ## The null hypothesis test was non-significant, t(17.78) = -1.861, p = 7.94e-02
-    ## NHST: don't reject null significance hypothesis that the effect is equal to zero 
+    ## The equivalence test was non-significant, t(9) = -1.491, p = 9.15e-01
+    ## The null hypothesis test was significant, t(9) = -4.062, p = 2.83e-03
+    ## NHST: reject null significance hypothesis that the effect is equal to zero 
     ##  TOST: don't reject null equivalence hypothesis
     ## 
     ## TOST Results 
-    ##                     t       SE       df     p.value
-    ## t-test     -1.8608135 0.849091 17.77647 0.079394140
-    ## TOST Lower -0.6830834 0.849091 17.77647 0.748319811
-    ## TOST Upper -3.0385435 0.849091 17.77647 0.003570669
+    ##                    t        SE df      p.value
+    ## t-test     -4.062128 0.3889587  9 2.832890e-03
+    ## TOST Lower -1.491161 0.3889587  9 9.149441e-01
+    ## TOST Upper -6.633095 0.3889587  9 4.778596e-05
     ## 
     ## Effect Sizes 
-    ##                 estimate       SE  lower.ci    upper.ci conf.level
-    ## Raw           -1.5800000 0.849091 -3.053381 -0.10661850        0.9
-    ## Hedges' g(av) -0.7964846 0.497633 -1.684326 -0.06154947        0.9
+    ##               estimate        SE  lower.ci   upper.ci conf.level
+    ## Raw          -1.580000 0.3889587 -2.293005 -0.8669947        0.9
+    ## Hedges' g(z) -1.230152 0.2008070 -1.848296 -0.8362302        0.9
     ## 
     ## Note: SMD confidence intervals are an approximation. See vignette("SMD_calcs").
 
@@ -213,6 +283,6 @@ TOSTsleep
 plot(TOSTsleep)
 ```
 
-![](Answers_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](Answers_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 # ANOVA

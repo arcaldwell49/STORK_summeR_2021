@@ -1,10 +1,11 @@
 ---
 title: 'Week 5: Correlations, t-tests, ANOVAs, oh my!'
 author: "Aaron R. Caldwell"
-date: "6/28/2021"
 output: 
   github_document:
     toc: TRUE
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=TRUE, message=FALSE, warning=FALSE}
@@ -113,9 +114,8 @@ test1
 
 However, we can also use the `report` package to get a summary of the result.
 
-```{r }
-test = report(test1)
-test
+```
+report(test1)
 ```
 
 `r report(test1)`
@@ -125,15 +125,79 @@ test
 
 > Let's compare the groups (i.e., drug) in the "sleep" dataset and see if there is a difference in the hours of sleep each night 
 
+So, in this scenario you are trying to test if there are difference between two treatments. Let's check the data and see what it looks like.
+
+```{r}
+knitr::kable(sleep)
+```
+
+Notice how the ID repeats between treatments? That means we have a *paired* sample; meaning that each participant was exposed to **both** conditions. This means we will use a paired samples t-test to test for differences in the mean increase in the hours of sleep (`extra`).
+
+Luckily, R makes this easy with the built in `t.test` function.
+
+```{r}
+# formula approach
+ttest1 = t.test(extra ~ group,
+                data = sleep,
+                paired = TRUE)
+
+# 2 vector approach
+
+ttest2 = t.test(x = subset(sleep, group ==1)$extra,
+                y = subset(sleep, group ==2)$extra,
+                paired = TRUE)
+
+ttest1
+```
+
+Again, we can use the `report` function to get a tidy text output
+
+```
+report(ttest1)
+```
+
+`r report(ttest1)`
+
+## Non-parametric tests
+
+Sometimes we the assumptions of a t-test (e.g., normal residuals) are not tenable. In these situations we can use a non-parametric test like the Wilcoxon signed rank test (test of ranks).
+
+The `wilcox.test` function performs this analysis and works just like the `t.test` function.
+```{r}
+# formula approach
+wtest1 = wilcox.test(extra ~ group,
+                data = sleep,
+                paired = TRUE)
+
+# 2 vector approach
+
+wtest2 = wilcox.test(x = subset(sleep, group ==1)$extra,
+                y = subset(sleep, group ==2)$extra,
+                paired = TRUE)
+
+wtest1
+```
+
+```
+report(wtest1)
+```
+
+`r report(wtest1)`
+
 ## Equivalence Test
+
+Let's say we are interested in equivalence. For example, we may have developed a new drug and want to make sure it equivalent to the old drug when it comes to extra hours of sleep. That is where the `TOSTER` package and the new `t_TOST` function can be useful. The setup is almost exactly the same; but we just
 
 ```{r}
 # remember library(TOSTER)
 
-TOSTsleep = t_TOST(extra ~ group,
-                   data = sleep,
-                   low_eqbound = -1,
-                   high_eqbound = 1)
+TOSTsleep = t_TOST(
+  extra ~ group,
+  data = sleep,
+  low_eqbound = -1,
+  high_eqbound = 1,
+  paired = TRUE
+)
 
 TOSTsleep
 
