@@ -12,6 +12,17 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+For this week watch and read the instructions for MarkMark 1-3
+
+1. https://rladiessydney.org/courses/ryouwithme/04-markymark-1/
+2. https://rladiessydney.org/courses/ryouwithme/04-markymark-2/
+3. https://rladiessydney.org/courses/ryouwithme/04-markymark-3/
+
+The step by step answers/instructions can be found in the Week4 folder, but I would suggest trying on your own first by watching the videos.
+
+The output you should have at the end of class should be close to what I have below!
+
 # Headings
 
 # One hash for main headings
