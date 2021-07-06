@@ -3,9 +3,10 @@ title: "MarkyMark"
 author: "Aaron R. Caldwell"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
+  github_document: default
   html_document: default
   word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -21,7 +22,11 @@ For this week watch and read the instructions for MarkMark 1-3
 
 The step by step answers/instructions can be found in the Week4 folder, but I would suggest trying on your own first by watching the videos.
 
-The output you should have at the end of class should be close to what I have below!
+The output you should have at the end of class should be close to what I have below! Though I would encourage you to insert your own images and tweets. If you run into errors (which I did on my rough draft of this document) we can troubleshoot during class.
+
+In order to knit this document as a pdf you will need to have `tinytex`, an R package, installed.
+
+\newpage
 
 # Headings
 
