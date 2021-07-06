@@ -163,6 +163,7 @@ report(ttest1)
 Sometimes we the assumptions of a t-test (e.g., normal residuals) are not tenable. In these situations we can use a non-parametric test like the Wilcoxon signed rank test (test of ranks).
 
 The `wilcox.test` function performs this analysis and works just like the `t.test` function.
+
 ```{r}
 # formula approach
 wtest1 = wilcox.test(extra ~ group,
@@ -189,7 +190,7 @@ effectsize::rank_biserial(subset(sleep, group == 1)$extra,
 
 ## Equivalence Test
 
-Let's say we are interested in equivalence. For example, we may have developed a new drug and want to make sure it equivalent to the old drug when it comes to extra hours of sleep. That is where the `TOSTER` package and the new `t_TOST` function can be useful. The setup is almost exactly the same; but we just
+Let's say we are interested in equivalence. For example, we may have developed a new drug and want to make sure it equivalent to the old drug when it comes to extra hours of sleep. That is where the `TOSTER` package and the new `t_TOST` function can be useful. The setup is almost exactly the same; but we just going to set upper and lower equivalence bounds.
 
 ```{r}
 # remember library(TOSTER)
@@ -207,5 +208,220 @@ TOSTsleep
 plot(TOSTsleep)
 ```
 
-
 # ANOVA
+
+> Suppose you are an animal scientist and you have data on different diets fed to chickens over 21 weeks. Let's assume the scientist wants to test if the weight of the chicks is moderated by diet over time
+
+As with many things in R there are literally dozens of ways to run an ANOVA. The main issue is that many of the options, like base R's `aov` function, are limited in scope (e.g., don't handle within subjects factors appropriately). This is where the `afex` R package (afex = "Analysis of Factorial Experiments") can be very useful. It essentially makes the process of performing and reporting an ANOVA much easier for the average R user.
+
+For this particular test, we have data that is in long format and is repeated measures. We need our model to include a within subjects factor, `Time`, across chicks, `Chick`, and include a between subjects interaction for diet, `Diet`, for the outcome variable (`weight`).
+
+For `afex`, there are three different functions that can provide the solution: `aov_ez`, `aov_car`, and `aov_4`. My preference is `aov_4` because it functions similarly to other functions that involve linear mixed models (so it is easier for me to conceptualize).
+
+The first is `aov_ez` where we can tell the function our id variable (`Chick`), the dependent variable (`weight`), and the we specifically specify the data, between subjects variables, and within subjects variables. Lastly, I specify that I want the partial eta-squared.
+
+```{r}
+a1 <- aov_ez(
+  id = "Chick",
+  dv = "weight",
+  data = ChickWeight,
+  between = "Diet",
+  within = c("Time"),
+  anova_table = list(es = "pes")
+)
+a1
+```
+
+The same process can be completed with the `aov_car` function but I have to specify the error term.
+
+```{r}
+a2 <- aov_car(weight ~ Diet + Error(Chick / Time),
+              data = ChickWeight,
+              anova_table = list(es = "pes"))
+a2
+```
+
+Lastly, there is `aov_4` which uses a format very similar to the mixed models functions in R (random/within separated by `|` for the id variable.
+```{r}
+a3 <- aov_4(weight ~ Diet + (Time|Chick),
+              data = ChickWeight,
+              anova_table = list(es = "pes"))
+a3
+```
+
+
+However, let's plot the residuals of the data to see if our assumptions are met. We can see from the plots below that the residuals are leptokurtic and heteroskedasticity is extreme.
+
+```{r}
+# Get residuals
+d1 = residuals(a3,
+               append = TRUE,
+               colname_residuals = "resid") %>%
+  as_tibble()
+
+# Get fitte values
+d2 = fitted(a3,
+               append = TRUE,
+               colname_fitted = "fitted") %>%
+  as_tibble()
+
+# Put together
+d1$fitted = d2$fitted 
+d1 = d1 %>%  mutate(std_resid = resid / sd(resid))
+  
+
+ggplot(d1,
+       aes(x=resid)) +
+  geom_density() +
+  theme_bw() +
+  labs(title = "Residuals")
+
+ggplot(d1,
+       aes(y=sqrt(abs(std_resid)),
+           x = fitted)) +
+  geom_point() +
+  geom_smooth(method="loess",
+              formula = y ~ x) +
+  theme_bw() +
+  labs(title = "Homogeneity of Variance")
+
+
+```
+
+Therefore, we can transform the data to "normalize" the residuals. We can see here that the repeated measures ANOVA still doesn't quite meet our assumptions tests, but it probably wouldn't be tragic to use this model either. However, please not that time is being treated as a continuous variable which is wildly inefficient.
+
+```{r}
+
+a4 = aov_4(
+  sqrt(weight) ~ Diet + (Time | Chick),
+  data = ChickWeight,
+  anova_table = list(es = "pes"))
+
+```
+
+```{r}
+# Get residuals
+d1 = residuals(a4,
+               append = TRUE,
+               colname_residuals = "resid") %>%
+  as_tibble()
+
+# Get fitte values
+d2 = fitted(a4,
+               append = TRUE,
+               colname_fitted = "fitted") %>%
+  as_tibble()
+
+# Put together
+d1$fitted = d2$fitted 
+d1 = d1 %>%  mutate(std_resid = resid / sd(resid))
+  
+
+ggplot(d1,
+       aes(x=resid)) +
+  geom_density() +
+  theme_bw() +
+  labs(title = "Residuals")
+
+ggplot(d1,
+       aes(y=sqrt(abs(std_resid)),
+           x = fitted)) +
+  geom_point() +
+  geom_smooth(method="loess",
+              formula = y ~ x) +
+  theme_bw() +
+  labs(title = "Homogeneity of Variance")
+
+afex_plot(a4,
+          x = "Time",
+          trace = "Diet",
+          panel = "Diet",
+          data_plot = FALSE)
+```
+
+## Additional Analysis
+
+```{r}
+ChickWeight %>%
+  drop_na() %>%
+ggplot(aes(x=Time,
+           y=weight,
+           color = Chick))+
+  geom_point(alpha = .1) +
+  geom_smooth(method = "lm",
+              formula = y~x,
+              se = FALSE) +
+  scale_color_viridis_d(option = "plasma") +
+  facet_wrap(~Diet, labeller = "label_both") +
+  theme_bw() +
+  theme(legend.position = "none") 
+```
+
+
+```{r}
+library(lme4)
+
+lmer_raw = lmer(weight ~ Diet*as.numeric(Time)+(Time|Chick),
+                data = ChickWeight)
+
+anova(lmer_raw) %>%
+  knitr::kable()
+
+dat_resid = ChickWeight %>%
+  mutate()
+```
+
+```{r}
+# Check normality
+check <- check_normality(lmer_raw)
+plot(check, type = "qq")
+plot(check)
+# Check Variance
+check2 <- check_heteroscedasticity(lmer_raw)
+
+plot(check2)
+```
+
+```{r}
+lmer_sq = lmer(sqrt(weight) ~ Diet*as.numeric(Time)+(Time|Chick),
+                data = ChickWeight)
+
+anova(lmer_sq) %>%
+  knitr::kable()
+```
+
+
+```{r}
+# Check normality
+check <- check_normality(lmer_sq)
+plot(check, type = "qq")
+plot(check)
+plot(check_normality(lmer_sq, effects = "random"))
+# Check Variance
+check2 <- check_heteroscedasticity(lmer_sq)
+
+plot(check2)
+```
+
+
+```{r}
+library(emmeans)
+emtrends(lmer_sq, pairwise ~ Diet, var = "Time",
+         adjust = "holm")
+
+emmip(lmer_sq, Diet ~ Time, cov.reduce = range) +
+  theme_classic() +
+  scale_color_viridis_d(option = "plasma")
+  
+```
+
+```{r}
+library(interactions)
+interact_plot(lmer_sq, pred = Time, modx = Diet, interval = TRUE,
+              int.width = 0.8,
+              data = ChickWeight)
+
+ss <- sim_margins(lmer_sq, pred = Time, modx = Diet)
+plot(ss)
+```
+

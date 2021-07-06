@@ -7,8 +7,10 @@ Aaron R. Caldwell
 -   [Correlations](#correlations)
     -   [Base R approach](#base-r-approach)
 -   [t-test](#t-test)
+    -   [Non-parametric tests](#non-parametric-tests)
     -   [Equivalence Test](#equivalence-test)
 -   [ANOVA](#anova)
+    -   [Additional](#additional)
 
 ``` r
 knitr::opts_chunk$set(echo = TRUE,
@@ -240,7 +242,58 @@ differences = -1.58) suggests that the effect is negative, statistically
 significant, and large (difference = -1.58, 95% CI \[-2.46, -0.70\],
 t(9) = -4.06, p = 0.003; Cohen’s d = -1.35, 95% CI \[-2.23, -0.44\])
 
+## Non-parametric tests
+
+Sometimes we the assumptions of a t-test (e.g., normal residuals) are
+not tenable. In these situations we can use a non-parametric test like
+the Wilcoxon signed rank test (test of ranks).
+
+The `wilcox.test` function performs this analysis and works just like
+the `t.test` function.
+
+``` r
+# formula approach
+wtest1 = wilcox.test(extra ~ group,
+                data = sleep,
+                paired = TRUE)
+
+# 2 vector approach
+
+wtest2 = wilcox.test(x = subset(sleep, group ==1)$extra,
+                y = subset(sleep, group ==2)$extra,
+                paired = TRUE)
+
+wtest1
+```
+
+    ## 
+    ##  Wilcoxon signed rank test with continuity correction
+    ## 
+    ## data:  extra by group
+    ## V = 0, p-value = 0.009091
+    ## alternative hypothesis: true location shift is not equal to 0
+
+The report function does not work for this type of result at this time,
+but you can get an effect size measure (rank-biserial correlation) from
+the `effectsize package`.
+
+``` r
+effectsize::rank_biserial(subset(sleep, group == 1)$extra,
+                          subset(sleep, group == 2)$extra)
+```
+
+    ## r (rank biserial) |         95% CI
+    ## ----------------------------------
+    ## -0.49             | [-0.78, -0.02]
+
 ## Equivalence Test
+
+Let’s say we are interested in equivalence. For example, we may have
+developed a new drug and want to make sure it equivalent to the old drug
+when it comes to extra hours of sleep. That is where the `TOSTER`
+package and the new `t_TOST` function can be useful. The setup is almost
+exactly the same; but we just going to set upper and lower equivalence
+bounds.
 
 ``` r
 # remember library(TOSTER)
@@ -283,6 +336,301 @@ TOSTsleep
 plot(TOSTsleep)
 ```
 
-![](Answers_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](Answers_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 # ANOVA
+
+> Suppose you are an animal scientist and you have data on different
+> diets fed to chickens over 21 weeks. Let’s assume the scientist wants
+> to test if the weight of the chicks is moderated by diet over time
+
+As with many things in R there are literally dozens of ways to run an
+ANOVA. The main issue is that many of the options, like base R’s `aov`
+function, are limited in scope (e.g., don’t handle within subjects
+factors appropriately). This is where the `afex` R package (afex =
+“Analysis of Factorial Experiments”) can be very useful. It essentially
+makes the process of performing and reporting an ANOVA much easier for
+the average R user.
+
+For this particular test, we have data that is in long format and is
+repeated measures. We need our model to include a within subjects
+factor, `Time`, across chicks, `Chick`, and include a between subjects
+interaction for diet, `Diet`, for the outcome variable (`weight`).
+
+For `afex`, there are three different functions that can provide the
+solution: `aov_ez`, `aov_car`, and `aov_4`. My preference is `aov_4`
+because it functions similarly to other functions that involve linear
+mixed models (so it is easier for me to conceptualize).
+
+``` r
+a1 <- aov_ez(
+  "Chick",
+  "weight",
+  ChickWeight,
+  between = "Diet",
+  within = c("Time"),
+  anova_table = list(es = "pes")
+)
+a1
+```
+
+    ## Anova Table (Type 3 tests)
+    ## 
+    ## Response: weight
+    ##      Effect          df     MSE          F  pes p.value
+    ## 1      Diet       3, 41 7646.22    5.07 ** .271    .004
+    ## 2      Time 1.26, 51.48 5736.71 280.95 *** .873   <.001
+    ## 3 Diet:Time 3.77, 51.48 5736.71     3.77 * .216    .010
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '+' 0.1 ' ' 1
+    ## 
+    ## Sphericity correction method: GG
+
+``` r
+a2 <- aov_car(weight ~ Diet + Error(Chick / Time),
+              data = ChickWeight,
+              anova_table = list(es = "pes"))
+a2
+```
+
+    ## Anova Table (Type 3 tests)
+    ## 
+    ## Response: weight
+    ##      Effect          df     MSE          F  pes p.value
+    ## 1      Diet       3, 41 7646.22    5.07 ** .271    .004
+    ## 2      Time 1.26, 51.48 5736.71 280.95 *** .873   <.001
+    ## 3 Diet:Time 3.77, 51.48 5736.71     3.77 * .216    .010
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '+' 0.1 ' ' 1
+    ## 
+    ## Sphericity correction method: GG
+
+``` r
+a3 <- aov_4(weight ~ Diet + (Time|Chick),
+              data = ChickWeight,
+              anova_table = list(es = "pes"))
+a3
+```
+
+    ## Anova Table (Type 3 tests)
+    ## 
+    ## Response: weight
+    ##      Effect          df     MSE          F  pes p.value
+    ## 1      Diet       3, 41 7646.22    5.07 ** .271    .004
+    ## 2      Time 1.26, 51.48 5736.71 280.95 *** .873   <.001
+    ## 3 Diet:Time 3.77, 51.48 5736.71     3.77 * .216    .010
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '+' 0.1 ' ' 1
+    ## 
+    ## Sphericity correction method: GG
+
+``` r
+afex_plot(a3,
+          x = "Time",
+          trace = "Diet",
+          panel = "Diet")
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+``` r
+dat2 <- ChickWeight %>%
+  mutate(weight2=sqrt(weight)) 
+a4 = aov_4(
+  weight2 ~ Diet + (Time | Chick),
+  data =dat2,
+  anova_table = list(es = "pes"))
+a4
+```
+
+    ## Anova Table (Type 3 tests)
+    ## 
+    ## Response: weight2
+    ##      Effect          df   MSE          F  pes p.value
+    ## 1      Diet       3, 41 11.97    5.43 ** .284    .003
+    ## 2      Time 1.33, 54.73  7.19 426.14 *** .912   <.001
+    ## 3 Diet:Time 4.00, 54.73  7.19     3.28 * .194    .018
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '+' 0.1 ' ' 1
+    ## 
+    ## Sphericity correction method: GG
+
+``` r
+afex_plot(a4,
+          x = "Time",
+          trace = "Diet",
+          panel = "Diet")
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+## Additional
+
+``` r
+ChickWeight %>%
+  drop_na() %>%
+ggplot(aes(x=Time,
+           y=weight,
+           color = Chick))+
+  geom_point(alpha = .1) +
+  geom_smooth(method = "lm",
+              formula = y~x,
+              se = FALSE) +
+  scale_color_viridis_d(option = "plasma") +
+  facet_wrap(~Diet, labeller = "label_both") +
+  theme_bw() +
+  theme(legend.position = "none") 
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+``` r
+library(lme4)
+
+lmer_raw = lmer(weight ~ Diet*as.numeric(Time)+(Time|Chick),
+                data = ChickWeight)
+
+anova(lmer_raw) %>%
+  knitr::kable()
+```
+
+|                       |    Sum Sq |    Mean Sq | NumDF |    DenDF |    F value | Pr(&gt;F) |
+|:----------------------|----------:|-----------:|------:|---------:|-----------:|----------:|
+| Diet                  |  1637.702 |   545.9007 |     3 | 45.97132 |   3.341462 | 0.0271843 |
+| as.numeric(Time)      | 53171.292 | 53171.2923 |     1 | 45.44451 | 325.461811 | 0.0000000 |
+| Diet:as.numeric(Time) |  2791.846 |   930.6155 |     3 | 45.54097 |   5.696303 | 0.0021271 |
+
+``` r
+dat_resid = ChickWeight %>%
+  mutate()
+```
+
+``` r
+# Check normality
+check <- check_normality(lmer_raw)
+```
+
+    ## Warning: Non-normality of residuals detected (p < .001).
+
+``` r
+plot(check, type = "qq")
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+``` r
+plot(check)
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
+
+``` r
+# Check Variance
+check2 <- check_heteroscedasticity(lmer_raw)
+```
+
+    ## Warning: Heteroscedasticity (non-constant error variance) detected (p < .001).
+
+``` r
+plot(check2)
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-21-3.png)<!-- -->
+
+``` r
+lmer_sq = lmer(sqrt(weight) ~ Diet*as.numeric(Time)+(Time|Chick),
+                data = ChickWeight)
+
+anova(lmer_sq) %>%
+  knitr::kable()
+```
+
+|                       |    Sum Sq |    Mean Sq | NumDF |    DenDF |    F value | Pr(&gt;F) |
+|:----------------------|----------:|-----------:|------:|---------:|-----------:|----------:|
+| Diet                  |  1.145675 |  0.3818915 |     3 | 45.66535 |   2.044681 | 0.1208408 |
+| as.numeric(Time)      | 90.651586 | 90.6515865 |     1 | 45.07901 | 485.356496 | 0.0000000 |
+| Diet:as.numeric(Time) |  2.857942 |  0.9526473 |     3 | 45.16447 |   5.100557 | 0.0039956 |
+
+``` r
+# Check normality
+check <- check_normality(lmer_sq)
+```
+
+    ## Warning: Non-normality of residuals detected (p < .001).
+
+``` r
+plot(check, type = "qq")
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+``` r
+plot(check)
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
+
+``` r
+# Check Variance
+check2 <- check_heteroscedasticity(lmer_sq)
+```
+
+    ## OK: Error variance appears to be homoscedastic (p = 0.590).
+
+``` r
+plot(check2)
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
+
+``` r
+library(emmeans)
+emtrends(lmer_sq, pairwise ~ Diet, var = "Time",
+         adjust = "holm")
+```
+
+    ## $emtrends
+    ##  Diet Time.trend     SE   df lower.CL upper.CL
+    ##  1         0.312 0.0284 46.5    0.254    0.369
+    ##  2         0.393 0.0393 44.9    0.314    0.472
+    ##  3         0.491 0.0393 44.9    0.412    0.570
+    ##  4         0.431 0.0394 45.0    0.352    0.510
+    ## 
+    ## Degrees-of-freedom method: kenward-roger 
+    ## Confidence level used: 0.95 
+    ## 
+    ## $contrasts
+    ##  contrast estimate     SE   df t.ratio p.value
+    ##  1 - 2     -0.0814 0.0485 45.4 -1.678  0.3414 
+    ##  1 - 3     -0.1793 0.0485 45.4 -3.695  0.0035 
+    ##  1 - 4     -0.1195 0.0485 45.5 -2.461  0.0885 
+    ##  2 - 3     -0.0979 0.0556 44.9 -1.759  0.3414 
+    ##  2 - 4     -0.0381 0.0557 44.9 -0.684  0.5764 
+    ##  3 - 4      0.0598 0.0557 44.9  1.075  0.5764 
+    ## 
+    ## Degrees-of-freedom method: kenward-roger 
+    ## P value adjustment: holm method for 6 tests
+
+``` r
+emmip(lmer_sq, Diet ~ Time, cov.reduce = range) +
+  theme_classic() +
+  scale_color_viridis_d(option = "plasma")
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+
+``` r
+library(interactions)
+interact_plot(lmer_sq, pred = Time, modx = Diet, interval = TRUE,
+              int.width = 0.8,
+              data = ChickWeight)
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
+``` r
+ss <- sim_margins(lmer_sq, pred = Time, modx = Diet)
+plot(ss)
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-25-2.png)<!-- -->
