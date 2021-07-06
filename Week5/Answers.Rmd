@@ -178,11 +178,14 @@ wtest2 = wilcox.test(x = subset(sleep, group ==1)$extra,
 wtest1
 ```
 
-```
-report(wtest1)
+
+The report function does not work for this type of result at this time, but you can get an effect size measure (rank-biserial correlation) from the `effectsize package`.
+
+```{r}
+effectsize::rank_biserial(subset(sleep, group == 1)$extra,
+                          subset(sleep, group == 2)$extra)
 ```
 
-`r report(wtest1)`
 
 ## Equivalence Test
 
