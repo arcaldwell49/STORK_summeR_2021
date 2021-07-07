@@ -288,14 +288,15 @@ ggplot(d1,
 
 ```
 
-Therefore, we can transform the data to "normalize" the residuals. We can see here that the repeated measures ANOVA still doesn't quite meet our assumptions tests, but it probably wouldn't be tragic to use this model either. However, please not that time is being treated as a continuous variable which is wildly inefficient.
+Therefore, we can transform the data to "normalize" the residuals. We can see here that the repeated measures ANOVA still doesn't quite meet our assumptions tests, but it probably wouldn't be tragic to use this model either. However, please note that time is being treated as a continuous variable which is wildly inefficient.
 
 ```{r}
 
 a4 = aov_4(
   sqrt(weight) ~ Diet + (Time | Chick),
   data = ChickWeight,
-  anova_table = list(es = "pes"))
+  anova_table = list(es = "pes")
+)
 
 ```
 
@@ -341,6 +342,8 @@ afex_plot(a4,
 
 ## Additional Analysis
 
+So let's look at the data a different way. Let's give each Chick an individual slope and separate by group.
+
 ```{r}
 ChickWeight %>%
   drop_na() %>%
@@ -357,11 +360,12 @@ ggplot(aes(x=Time,
   theme(legend.position = "none") 
 ```
 
+So it appears there is quite a bit of varying responses to "time" and possibly to diet. So, we can use a linear mixed model rather than the repeated measures ANOVA. The details aren't too important now, but in this case we have random slope and intercept for `Chick`.
 
 ```{r}
 library(lme4)
 
-lmer_raw = lmer(weight ~ Diet*as.numeric(Time)+(Time|Chick),
+lmer_raw = lmer(weight ~ Diet * as.numeric(Time) + (Time | Chick),
                 data = ChickWeight)
 
 anova(lmer_raw) %>%
@@ -370,6 +374,8 @@ anova(lmer_raw) %>%
 dat_resid = ChickWeight %>%
   mutate()
 ```
+
+Let's check the model again this time. However, this time we can use the `easystats` functions from the `see` package. The results... aren't much better.
 
 ```{r}
 # Check normality
@@ -382,6 +388,8 @@ check2 <- check_heteroscedasticity(lmer_raw)
 plot(check2)
 ```
 
+However, let's run the model with a square root transformation. 
+
 ```{r}
 lmer_sq = lmer(sqrt(weight) ~ Diet*as.numeric(Time)+(Time|Chick),
                 data = ChickWeight)
@@ -390,6 +398,7 @@ anova(lmer_sq) %>%
   knitr::kable()
 ```
 
+And, if we check the model, the residuals appear to be more "normal" and conform to the assumptions of a Gaussian linear model. Now, the test for normality is still "significant", but the visualizations indicate that the violations of these assumptions may not be too terrible. 
 
 ```{r}
 # Check normality
@@ -403,6 +412,13 @@ check2 <- check_heteroscedasticity(lmer_sq)
 plot(check2)
 ```
 
+Remember
+
+> All models are wrong but some are useful - George Box
+
+We can also check the differences in slope by using the `emmeans` package. This package can also be used for post-hoc comparisons.
+
+- See [this vignette](https://cran.r-project.org/web/packages/emmeans/vignettes/interactions.html) for more details on using `emmeans`
 
 ```{r}
 library(emmeans)
@@ -414,6 +430,10 @@ emmip(lmer_sq, Diet ~ Time, cov.reduce = range) +
   scale_color_viridis_d(option = "plasma")
   
 ```
+
+We can also plot the model predictions estimates per group using the `interactions` package.
+
+- See [this vignette](https://cran.r-project.org/web/packages/interactions/vignettes/interactions.html) for more details
 
 ```{r}
 library(interactions)

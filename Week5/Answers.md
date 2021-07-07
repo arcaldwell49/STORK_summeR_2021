@@ -10,7 +10,7 @@ Aaron R. Caldwell
     -   [Non-parametric tests](#non-parametric-tests)
     -   [Equivalence Test](#equivalence-test)
 -   [ANOVA](#anova)
-    -   [Additional](#additional)
+    -   [Additional Analysis](#additional-analysis)
 
 ``` r
 knitr::opts_chunk$set(echo = TRUE,
@@ -362,11 +362,16 @@ solution: `aov_ez`, `aov_car`, and `aov_4`. My preference is `aov_4`
 because it functions similarly to other functions that involve linear
 mixed models (so it is easier for me to conceptualize).
 
+The first is `aov_ez` where we can tell the function our id variable
+(`Chick`), the dependent variable (`weight`), and the we specifically
+specify the data, between subjects variables, and within subjects
+variables. Lastly, I specify that I want the partial eta-squared.
+
 ``` r
 a1 <- aov_ez(
-  "Chick",
-  "weight",
-  ChickWeight,
+  id = "Chick",
+  dv = "weight",
+  data = ChickWeight,
   between = "Diet",
   within = c("Time"),
   anova_table = list(es = "pes")
@@ -385,6 +390,9 @@ a1
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '+' 0.1 ' ' 1
     ## 
     ## Sphericity correction method: GG
+
+The same process can be completed with the `aov_car` function but I have
+to specify the error term.
 
 ``` r
 a2 <- aov_car(weight ~ Diet + Error(Chick / Time),
@@ -405,6 +413,10 @@ a2
     ## 
     ## Sphericity correction method: GG
 
+Lastly, there is `aov_4` which uses a format very similar to the mixed
+models functions in R (random/within separated by `|` for the id
+variable.
+
 ``` r
 a3 <- aov_4(weight ~ Diet + (Time|Chick),
               data = ChickWeight,
@@ -424,47 +436,118 @@ a3
     ## 
     ## Sphericity correction method: GG
 
+However, let’s plot the residuals of the data to see if our assumptions
+are met. We can see from the plots below that the residuals are
+leptokurtic and heteroskedasticity is extreme.
+
 ``` r
-afex_plot(a3,
-          x = "Time",
-          trace = "Diet",
-          panel = "Diet")
+# Get residuals
+d1 = residuals(a3,
+               append = TRUE,
+               colname_residuals = "resid") %>%
+  as_tibble()
+
+# Get fitte values
+d2 = fitted(a3,
+               append = TRUE,
+               colname_fitted = "fitted") %>%
+  as_tibble()
+
+# Put together
+d1$fitted = d2$fitted 
+d1 = d1 %>%  mutate(std_resid = resid / sd(resid))
+  
+
+ggplot(d1,
+       aes(x=resid)) +
+  geom_density() +
+  theme_bw() +
+  labs(title = "Residuals")
 ```
 
 ![](Answers_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
-dat2 <- ChickWeight %>%
-  mutate(weight2=sqrt(weight)) 
-a4 = aov_4(
-  weight2 ~ Diet + (Time | Chick),
-  data =dat2,
-  anova_table = list(es = "pes"))
-a4
+ggplot(d1,
+       aes(y=sqrt(abs(std_resid)),
+           x = fitted)) +
+  geom_point() +
+  geom_smooth(method="loess",
+              formula = y ~ x) +
+  theme_bw() +
+  labs(title = "Homogeneity of Variance")
 ```
 
-    ## Anova Table (Type 3 tests)
-    ## 
-    ## Response: weight2
-    ##      Effect          df   MSE          F  pes p.value
-    ## 1      Diet       3, 41 11.97    5.43 ** .284    .003
-    ## 2      Time 1.33, 54.73  7.19 426.14 *** .912   <.001
-    ## 3 Diet:Time 4.00, 54.73  7.19     3.28 * .194    .018
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '+' 0.1 ' ' 1
-    ## 
-    ## Sphericity correction method: GG
+![](Answers_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
+
+Therefore, we can transform the data to “normalize” the residuals. We
+can see here that the repeated measures ANOVA still doesn’t quite meet
+our assumptions tests, but it probably wouldn’t be tragic to use this
+model either. However, please note that time is being treated as a
+continuous variable which is wildly inefficient.
+
+``` r
+a4 = aov_4(
+  sqrt(weight) ~ Diet + (Time | Chick),
+  data = ChickWeight,
+  anova_table = list(es = "pes")
+)
+```
+
+``` r
+# Get residuals
+d1 = residuals(a4,
+               append = TRUE,
+               colname_residuals = "resid") %>%
+  as_tibble()
+
+# Get fitte values
+d2 = fitted(a4,
+               append = TRUE,
+               colname_fitted = "fitted") %>%
+  as_tibble()
+
+# Put together
+d1$fitted = d2$fitted 
+d1 = d1 %>%  mutate(std_resid = resid / sd(resid))
+  
+
+ggplot(d1,
+       aes(x=resid)) +
+  geom_density() +
+  theme_bw() +
+  labs(title = "Residuals")
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+``` r
+ggplot(d1,
+       aes(y=sqrt(abs(std_resid)),
+           x = fitted)) +
+  geom_point() +
+  geom_smooth(method="loess",
+              formula = y ~ x) +
+  theme_bw() +
+  labs(title = "Homogeneity of Variance")
+```
+
+![](Answers_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
 
 ``` r
 afex_plot(a4,
           x = "Time",
           trace = "Diet",
-          panel = "Diet")
+          panel = "Diet",
+          data_plot = FALSE)
 ```
 
-![](Answers_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](Answers_files/figure-gfm/unnamed-chunk-18-3.png)<!-- -->
 
-## Additional
+## Additional Analysis
+
+So let’s look at the data a different way. Let’s give each Chick an
+individual slope and separate by group.
 
 ``` r
 ChickWeight %>%
@@ -484,10 +567,15 @@ ggplot(aes(x=Time,
 
 ![](Answers_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
+So it appears there is quite a bit of varying responses to “time” and
+possibly to diet. So, we can use a linear mixed model rather than the
+repeated measures ANOVA. The details aren’t too important now, but in
+this case we have random slope and intercept for `Chick`.
+
 ``` r
 library(lme4)
 
-lmer_raw = lmer(weight ~ Diet*as.numeric(Time)+(Time|Chick),
+lmer_raw = lmer(weight ~ Diet * as.numeric(Time) + (Time | Chick),
                 data = ChickWeight)
 
 anova(lmer_raw) %>%
@@ -504,6 +592,10 @@ anova(lmer_raw) %>%
 dat_resid = ChickWeight %>%
   mutate()
 ```
+
+Let’s check the model again this time. However, this time we can use the
+`easystats` functions from the `see` package. The results… aren’t much
+better.
 
 ``` r
 # Check normality
@@ -537,6 +629,8 @@ plot(check2)
 
 ![](Answers_files/figure-gfm/unnamed-chunk-21-3.png)<!-- -->
 
+However, let’s run the model with a square root transformation.
+
 ``` r
 lmer_sq = lmer(sqrt(weight) ~ Diet*as.numeric(Time)+(Time|Chick),
                 data = ChickWeight)
@@ -550,6 +644,11 @@ anova(lmer_sq) %>%
 | Diet                  |  1.145675 |  0.3818915 |     3 | 45.66535 |   2.044681 | 0.1208408 |
 | as.numeric(Time)      | 90.651586 | 90.6515865 |     1 | 45.07901 | 485.356496 | 0.0000000 |
 | Diet:as.numeric(Time) |  2.857942 |  0.9526473 |     3 | 45.16447 |   5.100557 | 0.0039956 |
+
+And, if we check the model, the residuals appear to be more “normal” and
+conform to the assumptions of a Gaussian linear model. Now, the test for
+normality is still “significant”, but the visualizations indicate that
+the violations of these assumptions may not be too terrible.
 
 ``` r
 # Check normality
@@ -571,6 +670,18 @@ plot(check)
 ![](Answers_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
 
 ``` r
+plot(check_normality(lmer_sq, effects = "random"))
+```
+
+    ## Group: Chick
+    ## (Intercept) OK: random effects appear as normally distributed (p = 0.678).
+    ##        Time OK: random effects appear as normally distributed (p = 0.866).
+
+    ## [[1]]
+
+![](Answers_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
+
+``` r
 # Check Variance
 check2 <- check_heteroscedasticity(lmer_sq)
 ```
@@ -581,7 +692,18 @@ check2 <- check_heteroscedasticity(lmer_sq)
 plot(check2)
 ```
 
-![](Answers_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
+![](Answers_files/figure-gfm/unnamed-chunk-23-4.png)<!-- -->
+
+Remember
+
+> All models are wrong but some are useful - George Box
+
+We can also check the differences in slope by using the `emmeans`
+package. This package can also be used for post-hoc comparisons.
+
+-   See [this
+    vignette](https://cran.r-project.org/web/packages/emmeans/vignettes/interactions.html)
+    for more details on using `emmeans`
 
 ``` r
 library(emmeans)
@@ -618,6 +740,13 @@ emmip(lmer_sq, Diet ~ Time, cov.reduce = range) +
 ```
 
 ![](Answers_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+
+We can also plot the model predictions estimates per group using the
+`interactions` package.
+
+-   See [this
+    vignette](https://cran.r-project.org/web/packages/interactions/vignettes/interactions.html)
+    for more details
 
 ``` r
 library(interactions)
