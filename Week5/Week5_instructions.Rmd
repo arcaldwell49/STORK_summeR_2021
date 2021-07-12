@@ -2,8 +2,8 @@
 title: "Week 5 Homework"
 author: "Aaron R. Caldwell"
 output: 
-  pdf_document: default
   github_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}

@@ -96,4 +96,14 @@ within (time) and between subjects factor.
     on the basics of ANOVA with afex
 3.  [afex
     documentation](https://cran.r-project.org/web/packages/afex/vignettes/afex_anova_example.html)
-4.  
+4.  Check out `?aov_car` in R
+
+## Additional Help
+
+1.  [`emmeans`](https://cran.r-project.org/web/packages/emmeans/index.html)
+    R package
+2.  [`interactions`](https://cran.r-project.org/web/packages/interactions/index.html)
+3.  [Introduction to Mixed Models in
+    R](https://ourcodingclub.github.io/tutorials/mixed-models/)
+4.  `easystats` also has ways of [checking the model
+    fit](https://easystats.github.io/see/).

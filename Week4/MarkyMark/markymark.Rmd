@@ -3,16 +3,25 @@ title: "MarkyMark"
 author: "Aaron R. Caldwell"
 date: "`r Sys.Date()`"
 output:
-  github_document: default
   html_document: default
-  word_document: default
   pdf_document: default
+  word_document: 
+    reference_docx: "template.docx"
+  github_document: default
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
 ```
 
+
+```{r test1, include = FALSE}
+source(here::here("scripts", "basics.R"))
+```
 
 For this week watch and read the instructions for MarkMark 1-3
 
@@ -69,7 +78,7 @@ All you need is brackets for the text and paratheses with the URL
 
 Images are similar you just set a ! before the brackets and then the file path. But we can also use the `include_graphics` function in the knitr package. In my example code below we download an image from the internet, save it and then use the image as output.
 
-```{r results = 'asis', out.width="100px"}
+```{r results = 'asis', out.width="100px", out.extra='angle=90'}
 download.file(url = "https://aaroncaldwell.us/authors/admin/avatar_hucb0390a6bbbcd1a4b638e7b667551cb3_767338_270x270_fill_q90_lanczos_center.jpg",
           destfile = "image.png",
           mode = 'wb')
@@ -78,9 +87,15 @@ knitr::include_graphics(path = "image.png")
 
 # Embed a tweet
 
-Here is a good articlet to read on ggplot2! You may run into errors if you want to include emojis AND are knitting a pdf.
+Here is a good article to read on ggplot2! You may run into errors if you want to include emojis AND are knitting a pdf.
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">So <a href="https://twitter.com/emilynordmann?ref_src=twsrc%5Etfw">@emilynordmann</a> said we could have celebratory drinks after this preprint was downloaded 1000 times. There’s less than 50 to go, so if you’ve ever wanted a gentle intro to <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_src=twsrc%5Etfw">#rstats</a> through <a href="https://twitter.com/hashtag/dataviz?src=hash&amp;ref_src=twsrc%5Etfw">#dataviz</a>, I encourage you to download it <a href="https://t.co/L3Bl1kzpBQ">https://t.co/L3Bl1kzpBQ</a></p>&mdash; Lisa DeBruine  (@LisaDeBruine) <a href="https://twitter.com/LisaDeBruine/status/1408725653785042945?ref_src=twsrc%5Etfw">June 26, 2021</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+
+Also insert HTML symbols like theta:	 	 	$\theta$
+
+$$
+\beta = 2.5 \cdot \alpha
+$$
 
 
 # What about Code?
@@ -89,6 +104,7 @@ R markdown is nice because you can incorporate your code and get the output you 
 
 Mac: alt-command-I
 Windows: alt-control-I
+
 
 Remember, you can suppress messages and warnings in the header of the chunks.
 
@@ -135,7 +151,7 @@ cleanbeaches %>%
 
 Or we can plot the results.
 
-```{r}
+```{r fig.align="center"}
 cleanbeaches %>%
   group_by(site) %>%
   summarize(meanbugs = mean(beachbugs,na.rm=TRUE)) %>%

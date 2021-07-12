@@ -1,7 +1,7 @@
 MarkyMark
 ================
 Aaron R. Caldwell
-2021-07-06
+2021-07-12
 
 For this week watch and read the instructions for MarkMark 1-3
 
@@ -13,7 +13,7 @@ The step by step answers/instructions can be found in the Week4 folder,
 but I would suggest trying on your own first by watching the videos.
 
 The output you should have at the end of class should be close to what I
-have below! Though I would encourage you to insert your own images and
+have below\! Though I would encourage you to insert your own images and
 tweets. If you run into errors (which I did on my rough draft of this
 document) we can troubleshoot during class.
 
@@ -42,15 +42,15 @@ I want to show \*asterisks\*
 
 # Bullet points with dashes
 
--   Dash one
--   Dash two
--   Dash away all!
+  - Dash one
+  - Dash two
+  - Dash away all\!
 
 There must be a space after the dash to get bullets.
 
 # Quotes
 
-Now get quotes with a &gt;
+Now get quotes with a \>
 
 > “Rmarkdown was a major motiviation of mine to switch all of my data
 > workflow to R.” - Aaron Caldwell
@@ -64,7 +64,7 @@ here](https://github.com/jenrichmond/RMarkdownThrowdown)
 
 # Images
 
-Images are similar you just set a ! before the brackets and then the
+Images are similar you just set a \! before the brackets and then the
 file path. But we can also use the `include_graphics` function in the
 knitr package. In my example code below we download an image from the
 internet, save it and then use the image as output.
@@ -80,11 +80,13 @@ knitr::include_graphics(path = "image.png")
 
 # Embed a tweet
 
-Here is a good articlet to read on ggplot2! You may run into errors if
+Here is a good articlet to read on ggplot2\! You may run into errors if
 you want to include emojis AND are knitting a pdf.
 
 <blockquote class="twitter-tweet">
+
 <p lang="en" dir="ltr">
+
 So
 <a href="https://twitter.com/emilynordmann?ref_src=twsrc%5Etfw">@emilynordmann</a>
 said we could have celebratory drinks after this preprint was downloaded
@@ -95,12 +97,18 @@ through
 <a href="https://twitter.com/hashtag/dataviz?src=hash&amp;ref_src=twsrc%5Etfw">\#dataviz</a>,
 I encourage you to download it
 <a href="https://t.co/L3Bl1kzpBQ">https://t.co/L3Bl1kzpBQ</a>
+
 </p>
+
 — Lisa DeBruine (@LisaDeBruine)
 <a href="https://twitter.com/LisaDeBruine/status/1408725653785042945?ref_src=twsrc%5Etfw">June
 26, 2021</a>
+
 </blockquote>
+
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+Also insert HTML symbols like theta: Θ
 
 # What about Code?
 
@@ -153,7 +161,7 @@ cleanbeaches %>%
 ```
 
 | site                    | meanbugs |
-|:------------------------|---------:|
+| :---------------------- | -------: |
 | Bondi Beach             | 18.77545 |
 | Bronte Beach            | 31.42090 |
 | Clovelly Beach          | 10.21856 |
@@ -178,14 +186,14 @@ cleanbeaches %>%
   theme_classic()
 ```
 
-![](markymark_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](markymark_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 # Output
 
 There are a multiple of output types to choose from.
 
--   Rstudio guide: <https://rmarkdown.rstudio.com/lesson-9.html>
--   Yihui guide:
+  - Rstudio guide: <https://rmarkdown.rstudio.com/lesson-9.html>
+  - Yihui guide:
     <https://bookdown.org/yihui/rmarkdown/output-formats.html>
 
 Sometimes they will require extra installations. For example, pdf

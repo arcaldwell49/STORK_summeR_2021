@@ -23,7 +23,7 @@ cleanbeaches = beaches %>%
   rename(beachbugs = enterococci_cfu_100ml)  # rename
 
 # export cleanbeaches ----
-write_csv(cleanbeaches, "data/cleanbeaches.csv")
+#write_csv(cleanbeaches, "data/cleanbeaches.csv")
 # but note that it saves the file to root of your project
 
 # Arrange those bugs! -------
@@ -78,6 +78,6 @@ cleanbeaches_new = cleanbeaches %>%
   mutate(buggier_site = beachbugs > mean(beachbugs, na.rm=TRUE))
 
 # export
-write_csv(cleanbeaches_new, "data/cleanbeaches_new.csv")
+#write_csv(cleanbeaches_new, "data/cleanbeaches_new.csv")
   
 
