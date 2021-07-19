@@ -106,7 +106,7 @@ As an example, let's use `cor.test` to test the relationship between sepal lengt
 ```{r}
 sepal_length = iris$Sepal.Length
 petal_length = iris$Petal.Length
-test1 = cor.test(sepal_length,petal_length)
+test1 = cor.test(sepal_length, petal_length)
 # Now we can print the result
 test1
 
@@ -139,7 +139,8 @@ Luckily, R makes this easy with the built in `t.test` function.
 # formula approach
 ttest1 = t.test(extra ~ group,
                 data = sleep,
-                paired = TRUE)
+                paired = TRUE,
+                mu = 0)
 
 # 2 vector approach
 
@@ -210,7 +211,7 @@ plot(TOSTsleep)
 
 # ANOVA
 
-> Suppose you are an animal scientist and you have data on different diets fed to chickens over 21 weeks. Let's assume the scientist wants to test if the weight of the chicks is moderated by diet over time
+> Suppose you are an animal scientist and you have data on different diets fed to chickens over 21 weeks. Let's assume the scientist wants to test if the weight of the chicks is moderated by diet over time.
 
 As with many things in R there are literally dozens of ways to run an ANOVA. The main issue is that many of the options, like base R's `aov` function, are limited in scope (e.g., don't handle within subjects factors appropriately). This is where the `afex` R package (afex = "Analysis of Factorial Experiments") can be very useful. It essentially makes the process of performing and reporting an ANOVA much easier for the average R user.
 
@@ -235,13 +236,14 @@ a1
 The same process can be completed with the `aov_car` function but I have to specify the error term.
 
 ```{r}
-a2 <- aov_car(weight ~ Diet + Error(Chick / Time),
+a2 <- aov_car(formula = weight ~ Diet + Error(Chick / Time),
               data = ChickWeight,
               anova_table = list(es = "pes"))
 a2
 ```
 
 Lastly, there is `aov_4` which uses a format very similar to the mixed models functions in R (random/within separated by `|` for the id variable.
+
 ```{r}
 a3 <- aov_4(weight ~ Diet + (Time|Chick),
               data = ChickWeight,
@@ -347,6 +349,7 @@ So let's look at the data a different way. Let's give each Chick an individual s
 ```{r}
 ChickWeight %>%
   drop_na() %>%
+  mutate(Time2 = as.numeric(Time)) %>%
 ggplot(aes(x=Time,
            y=weight,
            color = Chick))+
@@ -371,8 +374,7 @@ lmer_raw = lmer(weight ~ Diet * as.numeric(Time) + (Time | Chick),
 anova(lmer_raw) %>%
   knitr::kable()
 
-dat_resid = ChickWeight %>%
-  mutate()
+dat_resid = ChickWeight
 ```
 
 Let's check the model again this time. However, this time we can use the `easystats` functions from the `see` package. The results... aren't much better.
@@ -422,10 +424,14 @@ We can also check the differences in slope by using the `emmeans` package. This 
 
 ```{r}
 library(emmeans)
-emtrends(lmer_sq, pairwise ~ Diet, var = "Time",
+emtrends(lmer_sq, 
+         pairwise ~ Diet, 
+         var = "Time",
          adjust = "holm")
 
-emmip(lmer_sq, Diet ~ Time, cov.reduce = range) +
+emmip(lmer_sq, 
+      Diet ~ Time,
+      cov.reduce = range) +
   theme_classic() +
   scale_color_viridis_d(option = "plasma")
   
@@ -437,7 +443,10 @@ We can also plot the model predictions estimates per group using the `interactio
 
 ```{r}
 library(interactions)
-interact_plot(lmer_sq, pred = Time, modx = Diet, interval = TRUE,
+interact_plot(lmer_sq, 
+              pred = Time,
+              modx = Diet, 
+              interval = TRUE,
               int.width = 0.8,
               data = ChickWeight)
 
